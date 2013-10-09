@@ -13,7 +13,7 @@ function get_user($pdo, $id) {
 }
 
 function get_json($pdo) {
-	$statement = $pdo->query("SELECT * FROM topic limit 100");
+	$statement = $pdo->query("SELECT * FROM topic");
 	
 	$users = array();
 	$users_hash = array();

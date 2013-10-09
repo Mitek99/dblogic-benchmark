@@ -22,7 +22,7 @@ function get_user($pdo, $memcache, $id) {
 }
 
 function get_json($pdo, $memcache) {
-	$statement = $pdo->query("SELECT * FROM topic limit 100");
+	$statement = $pdo->query("SELECT * FROM topic");
 	
 	$users = array();
 	$users_hash = array();

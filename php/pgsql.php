@@ -1,7 +1,7 @@
 <?php
 
 // Соединение, выбор базы данных
-$dbconn = pg_connect("host=localhost dbname=dblogic user=root password=")
+$dbconn = pg_connect("host=localhost dbname=dblogic user=dblogic password=dblogic")
     or die('Could not connect: ' . pg_last_error());
 
 // Выполнение SQL запроса
