@@ -27,7 +27,7 @@ function get_json($pdo) {
 		}
 		array_push($topics, $topic);
 	}
-	return json_encode(array("topics" => $topics, "users" => $users));
+	return json_encode(array("topics" => $topics, "users" => $users)/*, JSON_UNESCAPED_UNICODE*/);
 }
 
 header('Content-type: text/json');
