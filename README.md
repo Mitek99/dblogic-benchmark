@@ -11,5 +11,8 @@ Test data:
 JSON being generated:
 
 ```
-{topics: {array of topic objects}, users: {array of user objects, only those who are authors}}
+{ 
+  topics: {array of topic objects}, 
+  users: {array of user objects, only those who are authors}
+}
 ```
