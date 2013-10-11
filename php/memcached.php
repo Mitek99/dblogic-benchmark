@@ -36,9 +36,15 @@ function get_json($pdo, $memcache) {
 		}
 		array_push($topics, $topic);
 	}
-	return json_encode(array("topics" => $topics, "users" => $users)/*, JSON_UNESCAPED_UNICODE*/);
+	$time_start = microtime();
+	$json = json_encode(array("topics" => $topics, "users" => $users)/*, JSON_UNESCAPED_UNICODE*/);
+	$time_end = microtime();
+	$time = $time_end - $time_start;
+	echo "JSON encoding took ".$time."ms\n";
+	return $json;
 }
 
-header('Content-type: text/json');
+header('Content-type: text/plain');
 
-echo get_json($pdo, $memcache);
+echo "JSON size: ".strlen(get_json($pdo, $memcache))." bytes\n";
+

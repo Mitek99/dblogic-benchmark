@@ -7,8 +7,7 @@ retval text = '';
 
 BEGIN
 retval = (SELECT row_to_json(d) FROM 
-(SELECT (SELECT array_to_json(array_agg(row_to_json(t))) FROM topic t) topics, 
-(SELECT array_to_json(array_agg(row_to_json(u))) FROM "user" u WHERE u.user_id in (SELECT user_id from topic t2)) users) d);
+(SELECT (SELECT array_to_json(array_agg(row_to_json(t))) FROM topic t) topics) d);
 RETURN retval;
 END;
 
