@@ -9,23 +9,42 @@ var express = require('express'),
     async           = require('async');
 
 var db = redis.createClient();
+
+var connection = mysql.createConnection({
+  host     : 'localhost',
+  user     : 'root',
+  password : '',
+});
+
+connection.connect();
+connection.query('USE dblogic'); // Выполняем запрос на выбор БД   
+
 var app = express();
 
 var get_script = '\
 	local ids = redis.call("ZRANGE", "topics", 0, 4000)\
-	local res = {}\
+	local loaded_user_ids = {}\
+	local topics = {}\
+	local users = {}\
     for pos, id in ipairs(ids) do\
-        table.insert(res, cmsgpack.unpack(redis.call("HGET", "topic_values", id)))\
+        local topic = cmsgpack.unpack(redis.call("HGET", "topic_values", id))\
+        table.insert(topics, topic)\
+    	local user_id = topic.user_id\
+    	if loaded_user_ids[user_id] == nil then\
+			loaded_user_ids[id] = true\
+			local user = cmsgpack.unpack(redis.call("HGET", "user_values", user_id))\
+			table.insert(users, user)\
+		end\
     end\
-    return cjson.encode({["topics"] = res})\
+    return cjson.encode({["topics"] = topics, ["users"] = users})\
 ';
 
 var import_script = '\
-	local topic = cjson.decode(ARGV[1])\
-	local id = topic.topic_id\
-	redis.log(redis.LOG_WARNING, "topic_id="..id)\
-	redis.call("ZADD", "topics", 0, id)\
-	redis.call("HSET", "topic_values", id, cmsgpack.pack(topic))\
+	local obj = cjson.decode(ARGV[1])\
+	local entity = ARGV[2]\
+	local id = ARGV[3]\
+	redis.call("ZADD", entity.."s", 0, id)\
+	redis.call("HSET", entity.."_values", id, cmsgpack.pack(obj))\
 ';
 
 app.get('/', function(req, res) {
@@ -33,32 +52,32 @@ app.get('/', function(req, res) {
 		if(err) {
 			res.send("REDIS ERROR: " + err);
 		} else {
-			res.send(obj);
+			res.set('Content-Type', 'text/plain');
+			res.send("JSON length " + obj.length + " bytes");
 		}		
 	});
 });
 
 app.get('/import', function(req, res) {
-
-	var connection = mysql.createConnection({
-	  host     : 'localhost',
-	  user     : 'root',
-	  password : '',
-	});
-
-	connection.connect();
-	connection.query('USE dblogic'); // Выполняем запрос на выбор БД   
-
 	connection.query('SELECT * FROM topic', function(error, result, fields) {
         async.each(result, function(topic, done) {
-        	db.eval(import_script, 0, JSON.stringify(topic), function(err, obj) {
+        	db.eval(import_script, 0, JSON.stringify(topic), "topic", topic.topic_id, function(err, obj) {
 				if(err) done(err); else done();	
 			});
         }, function(err) {
             res.send("REDIS ERROR: " + err);
-            connection.end();
         });
+        connection.query('SELECT * FROM user', function(error, result, fields) {
+	        async.each(result, function(user, done) {
+	        	db.eval(import_script, 0, JSON.stringify(user), "user", user.user_id, function(err, obj) {
+					if(err) done(err); else done();	
+				});
+	        }, function(err) {
+	            res.send("REDIS ERROR: " + err);
+	        });
+		});
 	});
+	
 });
 app.listen(3000);
 
